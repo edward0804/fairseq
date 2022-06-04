@@ -10,6 +10,7 @@ Train a network across multiple GPUs.
 import contextlib
 import logging
 import os
+from pickletools import optimize
 import sys
 import time
 from argparse import Namespace
@@ -43,7 +44,7 @@ class Trainer(object):
     communication of the gradients across workers.
     """
 
-    def __init__(self, cfg: FairseqConfig, task, model, criterion, quantizer=None):
+    def __init__(self, cfg: FairseqConfig, task, model, criterion, model_d, quantizer=None):
 
         if isinstance(cfg, Namespace):
             logger.warning(
@@ -53,6 +54,7 @@ class Trainer(object):
 
         self.cfg = cfg
         self.task = task
+        self.model_d = model_d
 
         # catalog shared parameters
         shared_params = _catalog_shared_params(model)
@@ -136,6 +138,7 @@ class Trainer(object):
         self._num_xla_compiles = 0  # for TPUs
         self._optim_history = None
         self._optimizer = None
+        self.optimizer_d = torch.optim.Adam(self.model_d.parameters(), lr=1e-5)
         self._warn_once = set()
         self._wrapped_criterion = None
         self._wrapped_model = None
@@ -780,6 +783,7 @@ class Trainer(object):
         """Do forward, backward and parameter update."""
         self._set_seed()
         self.model.train()
+        self.model_d.train()
         self.criterion.train()
         self.zero_grad()
 
@@ -823,8 +827,10 @@ class Trainer(object):
                     loss, sample_size_i, logging_output = self.task.train_step(
                         sample=sample,
                         model=self.model,
+                        model_d=self.model_d,
                         criterion=self.criterion,
                         optimizer=self.optimizer,
+                        optimizer_d=self.optimizer_d,
                         update_num=self.get_num_updates(),
                         ignore_grad=is_dummy_batch,
                         **extra_kwargs,

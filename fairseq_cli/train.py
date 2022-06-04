@@ -39,6 +39,7 @@ from fairseq.file_io import PathManager
 from fairseq.logging import meters, metrics, progress_bar
 from fairseq.model_parallel.megatron_trainer import MegatronTrainer
 from fairseq.trainer import Trainer
+from fairseq.models.discriminator import Dis
 
 
 def main(cfg: FairseqConfig) -> None:
@@ -95,6 +96,8 @@ def main(cfg: FairseqConfig) -> None:
     else:
         model = task.build_model(cfg.model)
     criterion = task.build_criterion(cfg.criterion)
+    # Build discriminator
+    model_d = Dis()
     logger.info(model)
     logger.info("task: {}".format(task.__class__.__name__))
     logger.info("model: {}".format(model.__class__.__name__))
@@ -144,9 +147,9 @@ def main(cfg: FairseqConfig) -> None:
 
     # Build trainer
     if cfg.common.model_parallel_size == 1:
-        trainer = Trainer(cfg, task, model, criterion, quantizer)
+        trainer = Trainer(cfg, task, model, criterion, model_d, quantizer)
     else:
-        trainer = MegatronTrainer(cfg, task, model, criterion)
+        trainer = MegatronTrainer(cfg, task, model, model_d, criterion)
     logger.info(
         "training on {} devices (GPUs/TPUs)".format(
             cfg.distributed_training.distributed_world_size

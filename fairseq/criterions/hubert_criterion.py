@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from fairseq import metrics, utils
 from fairseq.criterions import FairseqCriterion, register_criterion
@@ -67,6 +68,11 @@ class HubertCriterion(FairseqCriterion):
         loss_m_list = []
         logp_m_list = model.get_logits(net_output, True)
         targ_m_list = model.get_targets(net_output, True)
+
+        #return rep to calculate discriminator loss
+        rep = net_output["representation"]
+        loss_d = nn.BCE()(rep, sample['distortion_class'])
+
         assert self.pred_masked_weight == 0 or len(logp_m_list) > 0
         for i, (logp_m, targ_m) in enumerate(zip(logp_m_list, targ_m_list)):
             loss_m = F.cross_entropy(logp_m, targ_m, reduction=reduction)
@@ -140,7 +146,7 @@ class HubertCriterion(FairseqCriterion):
                 logging_output[f"correct_u_{i}"] = corr_u
                 logging_output[f"count_u_{i}"] = count_u
 
-        return loss, sample_size, logging_output
+        return loss, sample_size, logging_output, loss_d
 
     @staticmethod
     def reduce_metrics(logging_outputs) -> None:

@@ -521,6 +521,7 @@ class HubertModel(BaseFairseqModel):
             "logit_u_list": logit_u_list,
             "padding_mask": padding_mask,
             "features_pen": features_pen,
+            "representation": x,
         }
         return result
 
