@@ -249,7 +249,7 @@ class HubertDataset(FairseqDataset):
         batch = {
             "id": torch.LongTensor([s["id"] for s in samples]),
             "net_input": net_input,
-            "distortion_labelssl": distortion_labels
+            "distortion_labels": distortion_labels
         }
 
         if self.single_target:
