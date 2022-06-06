@@ -39,7 +39,7 @@ from fairseq.file_io import PathManager
 from fairseq.logging import meters, metrics, progress_bar
 from fairseq.model_parallel.megatron_trainer import MegatronTrainer
 from fairseq.trainer import Trainer
-from fairseq.models.discriminator import Dis
+from fairseq.models.discriminator import Discriminator as Dis
 
 
 def main(cfg: FairseqConfig) -> None:
