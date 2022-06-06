@@ -28,7 +28,7 @@ def load_audio(manifest_path, max_keep, min_keep):
             items = line.strip().split("\t")
             label = int(items[2])
             name = items[0]
-            assert len(items) == 2, line
+            assert len(items) == 3, line
             sz = int(items[1])
             if min_keep is not None and sz < min_keep:
                 n_short += 1
