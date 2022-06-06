@@ -52,7 +52,7 @@ class HubertCriterion(FairseqCriterion):
         self.loss_weights = loss_weights
         self.log_keys = [] if log_keys is None else log_keys
 
-    def forward(self, model, sample, reduce=True, log_pred=False):
+    def forward(self, model, sample, model_d, reduce=True, log_pred=False):
         """Compute the loss for the given sample.
         Returns a tuple with three elements:
         1) the loss
@@ -71,7 +71,9 @@ class HubertCriterion(FairseqCriterion):
 
         #return rep to calculate discriminator loss
         rep = net_output["representation"]
-        loss_d = nn.BCELoss()(rep, torch.tensor(sample['distortion_labels'], dtype=torch.long))
+        target_dis_label = torch.tensor([[label for _ in range(rep.shape[1])] for label in sample['distortion_labels']], dtype=torch.long)
+        logits = model_d(rep)
+        loss_d = nn.BCELoss()(logits, target_dis_label)
 
         assert self.pred_masked_weight == 0 or len(logp_m_list) > 0
         for i, (logp_m, targ_m) in enumerate(zip(logp_m_list, targ_m_list)):
