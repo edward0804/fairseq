@@ -26,8 +26,8 @@ def load_audio(manifest_path, max_keep, min_keep):
         root = f.readline().strip()
         for ind, line in enumerate(f):
             items = line.strip().split("\t")
-            label = int(items[0].split(' ')[1])
-            name = items[0].split(' ')[0]
+            label = int(items[2])
+            name = items[0]
             assert len(items) == 2, line
             sz = int(items[1])
             if min_keep is not None and sz < min_keep:
@@ -249,7 +249,7 @@ class HubertDataset(FairseqDataset):
         batch = {
             "id": torch.LongTensor([s["id"] for s in samples]),
             "net_input": net_input,
-            "distortion_labels": distortion_labels
+            "distortion_labelssl": distortion_labels
         }
 
         if self.single_target:
