@@ -163,8 +163,8 @@ class Trainer(object):
                 )
             else:
                 self.cuda_env_arr = [self.cuda_env]
-            if self.data_parallel_rank == 0:
-                utils.CudaEnvironment.pretty_print_cuda_env_list(self.cuda_env_arr)
+            """if self.data_parallel_rank == 0:
+                utils.CudaEnvironment.pretty_print_cuda_env_list(self.cuda_env_arr)"""
         else:
             self.cuda_env = None
             self.cuda_env_arr = None
