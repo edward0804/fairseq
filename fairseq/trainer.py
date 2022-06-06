@@ -197,7 +197,7 @@ class Trainer(object):
         if self.cfg.distributed_training.distributed_world_size == 1:
             return 0
        # return distributed_utils.get_data_parallel_rank()
-       return 0
+        return 0
 
     @property
     def is_data_parallel_master(self):
