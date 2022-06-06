@@ -72,7 +72,7 @@ class HubertCriterion(FairseqCriterion):
         #return rep to calculate discriminator loss
         rep = net_output["representation"]
         target_dis_label = torch.tensor([[label for _ in range(rep.shape[1])] for label in sample['distortion_labels']], dtype=torch.long)
-        logits = model_d(rep.to('cuda'))
+        logits = model_d(rep.float().to('cuda'))
         loss_d = nn.BCELoss()(logits, target_dis_label)
 
         assert self.pred_masked_weight == 0 or len(logp_m_list) > 0
