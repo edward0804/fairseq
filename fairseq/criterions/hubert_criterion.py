@@ -71,7 +71,7 @@ class HubertCriterion(FairseqCriterion):
 
         #return rep to calculate discriminator loss
         rep = net_output["representation"]
-        loss_d = nn.BCE()(rep, sample['distortion_labels'])
+        loss_d = nn.BCELoss()(rep, sample['distortion_labels'])
 
         assert self.pred_masked_weight == 0 or len(logp_m_list) > 0
         for i, (logp_m, targ_m) in enumerate(zip(logp_m_list, targ_m_list)):
