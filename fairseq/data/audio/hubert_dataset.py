@@ -21,11 +21,13 @@ logger = logging.getLogger(__name__)
 
 def load_audio(manifest_path, max_keep, min_keep):
     n_long, n_short = 0, 0
-    names, inds, sizes = [], [], []
+    names, inds, sizes, distortion_label = [], [], [], []
     with open(manifest_path) as f:
         root = f.readline().strip()
         for ind, line in enumerate(f):
             items = line.strip().split("\t")
+            label = int(items[0].split(' ')[1])
+            name = items[0].split(' ')[0]
             assert len(items) == 2, line
             sz = int(items[1])
             if min_keep is not None and sz < min_keep:
@@ -33,7 +35,8 @@ def load_audio(manifest_path, max_keep, min_keep):
             elif max_keep is not None and sz > max_keep:
                 n_long += 1
             else:
-                names.append(items[0])
+                names.append(name)
+                distortion_label.append(label)
                 inds.append(ind)
                 sizes.append(sz)
     tot = ind + 1
@@ -44,7 +47,7 @@ def load_audio(manifest_path, max_keep, min_keep):
             f"longest-loaded={max(sizes)}, shortest-loaded={min(sizes)}"
         )
     )
-    return root, names, inds, tot, sizes
+    return root, names, inds, tot, sizes, distortion_label
 
 
 def load_label(label_path, inds, tot):
@@ -127,7 +130,7 @@ class HubertDataset(FairseqDataset):
         random_crop: bool = False,
         single_target: bool = False,
     ):
-        self.audio_root, self.audio_names, inds, tot, self.sizes = load_audio(
+        self.audio_root, self.audio_names, inds, tot, self.sizes, self.distortion_label = load_audio(
             manifest_path, max_keep_sample_size, min_keep_sample_size
         )
         self.sample_rate = sample_rate
@@ -190,13 +193,17 @@ class HubertDataset(FairseqDataset):
             label = self.label_processors[label_idx](label)
         return label
 
+    def get_distortion_label(self, index):
+        return self.distortion_label[index]
+
     def get_labels(self, index):
         return [self.get_label(index, i) for i in range(self.num_labels)]
 
     def __getitem__(self, index):
         wav = self.get_audio(index)
         labels = self.get_labels(index)
-        return {"id": index, "source": wav, "label_list": labels}
+        distortion_label = self.get_distortion_label(index)  
+        return {"id": index, "source": wav, "label_list": labels, "distortion_label": distortion_label}
 
     def __len__(self):
         return len(self.sizes)
@@ -221,6 +228,7 @@ class HubertDataset(FairseqDataset):
             return {}
 
         audios = [s["source"] for s in samples]
+        distortion_labels = [s["distortion_label"] for s in samples]
         audio_sizes = [len(s) for s in audios]
         if self.pad_audio:
             audio_size = min(max(audio_sizes), self.max_sample_size)
@@ -241,6 +249,7 @@ class HubertDataset(FairseqDataset):
         batch = {
             "id": torch.LongTensor([s["id"] for s in samples]),
             "net_input": net_input,
+            "distortion_labels": distortion_labels
         }
 
         if self.single_target:
