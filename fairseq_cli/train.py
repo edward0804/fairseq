@@ -97,7 +97,7 @@ def main(cfg: FairseqConfig) -> None:
         model = task.build_model(cfg.model)
     criterion = task.build_criterion(cfg.criterion)
     # Build discriminator
-    model_d = Dis()
+    model_d = Dis().to('cuda')
     logger.info(model)
     logger.info("task: {}".format(task.__class__.__name__))
     logger.info("model: {}".format(model.__class__.__name__))
